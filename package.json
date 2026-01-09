@@ -1,0 +1,23 @@
+{
+  "name": "Comfyui_o1key",
+  "version": "1.0.0",
+  "description": "ComfyUI plugin for Nano Banana image generation API - Text-to-Image and Image-to-Image",
+  "author": "o1key.com",
+  "license": "MIT",
+  "keywords": [
+    "comfyui",
+    "image-generation",
+    "ai",
+    "nano-banana",
+    "text-to-image",
+    "image-to-image"
+  ],
+  "homepage": "https://o1key.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/Comfyui_o1key.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/Comfyui_o1key/issues"
+  }
+}

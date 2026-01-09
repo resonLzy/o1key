@@ -1,0 +1,298 @@
+﻿"""
+ComfyUI nodes for Nano Banana image generation
+"""
+from .utils import (
+    call_nano_banana_api,
+    process_api_response,
+    pil_to_comfy_image,
+    comfy_image_to_base64
+)
+import logging
+from comfy.utils import ProgressBar
+
+logger = logging.getLogger(__name__)
+
+
+class NanoBananaTextToImage:
+    """
+    ComfyUI node for text-to-image generation using Nano Banana API
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {
+                    "multiline": True,
+                    "default": "a beautiful sunset over mountains"
+                }),
+                "api_key": ("STRING", {
+                    "multiline": False,
+                    "default": ""
+                }),
+                "model": (["nano-banana-pro-svip", "nano-banana-svip"], {
+                    "default": "nano-banana-pro-svip"
+                }),
+                "aspect_ratio": ([
+                    "1:1", "4:3", "3:4", "16:9", "9:16", 
+                    "2:3", "3:2", "4:5", "5:4", "21:9"
+                ], {
+                    "default": "1:1"
+                }),
+                "batch_size": ("INT", {
+                    "default": 1,
+                    "min": 1,
+                    "max": 100,
+                    "step": 1,
+                    "display": "number"
+                }),
+            },
+            "optional": {
+                "seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2147483647,
+                    "display": "number"
+                }),
+                "image_size": (["1K", "2K", "4K"], {
+                    "default": "2K"
+                }),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate_image"
+    CATEGORY = "o1key"
+    
+    def generate_image(self, prompt, api_key, model, aspect_ratio, batch_size=1, seed=-1, image_size="2K"):
+        """
+        Generate image from text prompt
+        """
+        try:
+
+            # Only use image_size for nano-banana-pro-svip
+            size_param = image_size if model == "nano-banana-pro-svip" else None
+
+            # Process seed (-1 means random)
+            seed_param = None if seed < 0 else seed
+
+            print(f"\n{'='*60}")
+            print(f"Nano Banana 文生图")
+            print(f"{'='*60}")
+            print(f"提示词    {prompt[:80]}{'...' if len(prompt) > 80 else ''}")
+            print(f"模型      {model}")
+            print(f"宽高比    {aspect_ratio}")
+            print(f"批量数量  {batch_size}")
+            print(f"清晰度    {image_size}")
+            print(f"{'='*60}\n")
+            
+            logger.debug(f"Full params - Model: {model}, Aspect: {aspect_ratio}, Size: {image_size}")
+            
+            # Only use image_size for nano-banana-pro-svip
+            size_param = image_size if model == "nano-banana-pro-svip" else None
+            
+            # Process seed (-1 means random)
+            seed_param = None if seed < 0 else seed
+            
+            # 批量生成图片
+            batch_images = []
+            pbar = ProgressBar(batch_size)  # 创建进度条
+            for i in range(batch_size):
+                if batch_size > 1:
+                    print(f"生成中 ({i+1}/{batch_size})...")
+                
+                # Call API
+                response_data = call_nano_banana_api(
+                    prompt=prompt,
+                    model=model,
+                    aspect_ratio=aspect_ratio,
+                    image_size=size_param,
+                    seed=seed_param,
+                    api_key=api_key
+                )
+
+                # Process response
+                pil_image = process_api_response(response_data)
+
+                # Convert to ComfyUI format
+                comfy_image = pil_to_comfy_image(pil_image)
+                
+                batch_images.append(comfy_image)
+                pbar.update(1)
+
+            # 合并所有图片为一个 batch
+            if len(batch_images) == 1:
+                result = batch_images[0]
+                print(f"\n完成!\n")
+            else:
+                import torch
+                result = torch.cat(batch_images, dim=0)
+                print(f"\n完成! 共生成 {batch_size} 张图片\n")
+
+            return (result,)
+            
+        except Exception as e:
+            error_msg = f"文生图失败: {str(e)}"
+
+            # Only use image_size for nano-banana-pro-svip
+            size_param = image_size if model == "nano-banana-pro-svip" else None
+
+            # Process seed (-1 means random)
+            seed_param = None if seed < 0 else seed
+
+            print(f"\n{error_msg}\n")
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+
+class NanoBananaImageToImage:
+    """
+    ComfyUI node for image-to-image generation using Nano Banana API
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "prompt": ("STRING", {
+                    "multiline": True,
+                    "default": "transform this into a watercolor painting"
+                }),
+                "api_key": ("STRING", {
+                    "multiline": False,
+                    "default": ""
+                }),
+                "model": (["nano-banana-pro-svip", "nano-banana-svip"], {
+                    "default": "nano-banana-pro-svip"
+                }),
+                "aspect_ratio": ([
+                    "1:1", "4:3", "3:4", "16:9", "9:16", 
+                    "2:3", "3:2", "4:5", "5:4", "21:9"
+                ], {
+                    "default": "1:1"
+                }),
+                "batch_size": ("INT", {
+                    "default": 1,
+                    "min": 1,
+                    "max": 100,
+                    "step": 1,
+                    "display": "number"
+                }),
+            },
+            "optional": {
+                "seed": ("INT", {
+                    "default": -1,
+                    "min": -1,
+                    "max": 2147483647,
+                    "display": "number"
+                }),
+                "image_size": (["1K", "2K", "4K"], {
+                    "default": "2K"
+                }),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate_image"
+    CATEGORY = "o1key"
+    
+    def generate_image(self, image, prompt, api_key, model, aspect_ratio, batch_size=1, seed=-1, image_size="2K"):
+        """
+        Generate image from reference image and text prompt
+        """
+        try:
+
+            # Only use image_size for nano-banana-pro-svip
+            size_param = image_size if model == "nano-banana-pro-svip" else None
+
+            # Process seed (-1 means random)
+            seed_param = None if seed < 0 else seed
+
+            print(f"\n{'='*60}")
+            print(f"Nano Banana 图生图")
+            print(f"{'='*60}")
+            print(f"提示词    {prompt[:80]}{'...' if len(prompt) > 80 else ''}")
+            print(f"模型      {model}")
+            print(f"宽高比    {aspect_ratio}")
+            print(f"批量数量  {batch_size}")
+            print(f"清晰度    {image_size}")
+            print(f"参考图    {image.shape[2]}x{image.shape[1]}")
+            if batch_size > 1:
+                print(f"批次      {batch_size} 张")
+            print(f"{'='*60}\n")
+            
+            logger.debug(f"Reference image shape: {image.shape}")
+            
+            # Convert reference image to base64
+            reference_base64 = comfy_image_to_base64(image)
+            
+            # Only use image_size for nano-banana-pro-svip
+            seed_param = None if seed < 0 else seed
+            
+            # 批量生成图片
+            batch_images = []
+            for i in range(batch_size):
+                if batch_size > 1:
+                    print(f"生成中 ({i+1}/{batch_size})...")
+                
+                # Call API
+                response_data = call_nano_banana_api(
+                    prompt=prompt,
+                    model=model,
+                    aspect_ratio=aspect_ratio,
+                    image_size=size_param,
+                    seed=seed_param,
+                    api_key=api_key,
+                    reference_image_base64=reference_base64
+                )
+
+                # Process response
+                pil_image = process_api_response(response_data)
+
+                # Convert to ComfyUI format
+                comfy_image = pil_to_comfy_image(pil_image)
+                
+                batch_images.append(comfy_image)
+                pbar.update(1)
+
+            # 合并所有图片为一个 batch
+            if len(batch_images) == 1:
+                result = batch_images[0]
+                print(f"\n完成!\n")
+            else:
+                import torch
+                result = torch.cat(batch_images, dim=0)
+                print(f"\n完成! 共生成 {batch_size} 张图片\n")
+
+            return (result,)
+            
+        except Exception as e:
+            error_msg = f"图生图失败: {str(e)}"
+
+            # Only use image_size for nano-banana-pro-svip
+            size_param = image_size if model == "nano-banana-pro-svip" else None
+
+            # Process seed (-1 means random)
+            seed_param = None if seed < 0 else seed
+
+            print(f"\n{error_msg}\n")
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+
+# Node class mappings for ComfyUI
+NODE_CLASS_MAPPINGS = {
+    "NanoBananaTextToImage": NanoBananaTextToImage,
+    "NanoBananaImageToImage": NanoBananaImageToImage,
+}
+
+# Node display names in ComfyUI interface
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "NanoBananaTextToImage": "Nano Banana Text-to-Image",
+    "NanoBananaImageToImage": "Nano Banana Image-to-Image",
+}
+
+
