@@ -153,11 +153,11 @@ class NanoBananaImageToImage:
                 }),
             },
             "optional": {
-                "reference_2": ("IMAGE",),
-                "reference_3": ("IMAGE",),
-                "reference_4": ("IMAGE",),
-                "reference_5": ("IMAGE",),
-                "reference_6": ("IMAGE",),
+                "image_2": ("IMAGE",),
+                "image_3": ("IMAGE",),
+                "image_4": ("IMAGE",),
+                "image_5": ("IMAGE",),
+                "image_6": ("IMAGE",),
                 "seed": ("INT", {
                     "default": -1,
                     "min": -1,
@@ -172,7 +172,7 @@ class NanoBananaImageToImage:
     FUNCTION = "generate_image"
     CATEGORY = "o1key"
     
-    def generate_image(self, image, prompt, api_key, model, aspect_ratio, image_size="2K", reference_2=None, reference_3=None, reference_4=None, reference_5=None, reference_6=None, seed=-1):
+    def generate_image(self, image, prompt, api_key, model, aspect_ratio, image_size="2K", image_2=None, image_3=None, image_4=None, image_5=None, image_6=None, seed=-1):
         """
         Generate image from reference image and text prompt
         """
@@ -186,16 +186,16 @@ class NanoBananaImageToImage:
             
             # 收集所有参考图
             reference_images = [image]
-            if reference_2 is not None:
-                reference_images.append(reference_2)
-            if reference_3 is not None:
-                reference_images.append(reference_3)
-            if reference_4 is not None:
-                reference_images.append(reference_4)
-            if reference_5 is not None:
-                reference_images.append(reference_5)
-            if reference_6 is not None:
-                reference_images.append(reference_6)
+            if image_2 is not None:
+                reference_images.append(image_2)
+            if image_3 is not None:
+                reference_images.append(image_3)
+            if image_4 is not None:
+                reference_images.append(image_4)
+            if image_5 is not None:
+                reference_images.append(image_5)
+            if image_6 is not None:
+                reference_images.append(image_6)
             
             num_references = len(reference_images)
 
